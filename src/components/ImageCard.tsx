@@ -1,7 +1,7 @@
-import React, { useContext } from 'react';
+import React, { useState } from 'react';
 import { TouchableOpacity, Image, StyleSheet, Dimensions, View, Text } from 'react-native';
+import { Ionicons } from '@expo/vector-icons'; // Импорт иконок
 import { PixabayImage } from '../types';
-import { FavoritesContext } from '../context/FavoritesContext';
 
 interface ImageCardProps {
   image: PixabayImage;
@@ -13,9 +13,12 @@ const numColumns = 2;
 const cardWidth = (screenWidth - 30) / numColumns; 
 
 export default function ImageCard({ image, onPress }: ImageCardProps) {
-  // Подключаем контекст
-  const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
-  const favorite = isFavorite(image.id);
+  // Локальный стейт для кнопки лайка (позже AsyncStorage)
+  const [isFavorite, setIsFavorite] = useState(false);
+
+  const handleFavoritePress = () => {
+    setIsFavorite(!isFavorite);
+  };
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(image)} activeOpacity={0.8}>
@@ -25,17 +28,25 @@ export default function ImageCard({ image, onPress }: ImageCardProps) {
         resizeMode="cover" 
       />
       
-      {/* Кнопка лайка поверх картинки */}
-      <TouchableOpacity 
-        style={styles.likeButton} 
-        onPress={() => toggleFavorite(image)}
-      >
-        <Text style={styles.likeIcon}>{favorite ? '❤️' : '🤍'}</Text>
+      {/* Кнопка "В избранное" в правом верхнем углу */}
+      <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
+        <Ionicons 
+          name={isFavorite ? "heart" : "heart-outline"} 
+          size={24} 
+          color={isFavorite ? "#e0245e" : "#fff"} 
+        />
       </TouchableOpacity>
 
+      {/* Оверлей со статистикой внизу */}
       <View style={styles.statsOverlay}>
-        <Text style={styles.statsText}>👁 {image.views}</Text>
-        <Text style={styles.statsText}>❤️ {image.likes}</Text>
+        <View style={styles.statItem}>
+          <Ionicons name="eye" size={14} color="#fff" />
+          <Text style={styles.statsText}>{image.views}</Text>
+        </View>
+        <View style={styles.statItem}>
+          <Ionicons name="heart" size={14} color="#fff" />
+          <Text style={styles.statsText}>{image.likes}</Text>
+        </View>
       </View>
     </TouchableOpacity>
   );
@@ -46,7 +57,7 @@ const styles = StyleSheet.create({
     width: cardWidth,
     height: cardWidth, 
     margin: 5,
-    borderRadius: 10,
+    borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#e1e4e8',
     position: 'relative',
@@ -55,16 +66,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  likeButton: {
+  favoriteButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 20,
     padding: 6,
-  },
-  likeIcon: {
-    fontSize: 16,
   },
   statsOverlay: {
     position: 'absolute',
@@ -74,8 +82,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4, // Расстояние между иконкой и текстом
   },
   statsText: {
     color: '#fff',

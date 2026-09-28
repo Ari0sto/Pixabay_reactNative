@@ -1,6 +1,8 @@
-import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { PixabayImage } from '../types';
+
+const FAVORITES_KEY = '@favorites_data';
 
 interface FavoritesContextType {
   favorites: PixabayImage[];
@@ -8,53 +10,47 @@ interface FavoritesContextType {
   isFavorite: (id: number) => boolean;
 }
 
-export const FavoritesContext = createContext<FavoritesContextType>({
-  favorites: [],
-  toggleFavorite: () => {},
-  isFavorite: () => false,
-});
+const FavoritesContext = createContext<FavoritesContextType | undefined>(undefined);
 
-const FAVORITES_KEY = '@favorites_images';
-
-export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
+export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<PixabayImage[]>([]);
 
-  // При запуске приложения загружаем сохраненные данные
+  // Загрузка избранного из AsyncStorage
   useEffect(() => {
+    const loadFavorites = async () => {
+      try {
+        const stored = await AsyncStorage.getItem(FAVORITES_KEY);
+        if (stored) {
+          setFavorites(JSON.parse(stored));
+        }
+      } catch (error) {
+        console.error('Помилка завантаження обраного', error);
+      }
+    };
     loadFavorites();
   }, []);
 
-  const loadFavorites = async () => {
-    try {
-      const stored = await AsyncStorage.getItem(FAVORITES_KEY);
-      if (stored) {
-        setFavorites(JSON.parse(stored));
+  // Сохранение избранного в AsyncStorage при изменении
+  useEffect(() => {
+    const saveFavorites = async () => {
+      try {
+        await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+      } catch (error) {
+        console.error('Помилка збереження обраного', error);
       }
-    } catch (error) {
-      console.error('[Context] Помилка завантаження обраного:', error);
-    }
-  };
+    };
+    saveFavorites();
+  }, [favorites]);
 
-  const toggleFavorite = async (image: PixabayImage) => {
-    try {
-      let updatedFavorites;
-      const exists = favorites.some((fav) => fav.id === image.id);
-
+  const toggleFavorite = (image: PixabayImage) => {
+    setFavorites((prev) => {
+      const exists = prev.some((fav) => fav.id === image.id);
       if (exists) {
-        // Удаление из избранного
-        updatedFavorites = favorites.filter((fav) => fav.id !== image.id);
-        console.log(`[Context] Зображення ${image.id} видалено з обраного`);
+        return prev.filter((fav) => fav.id !== image.id); // Удаляем
       } else {
-        // Добавление в избранное (в начало списка)
-        updatedFavorites = [image, ...favorites];
-        console.log(`[Context] Зображення ${image.id} додано до обраного`);
+        return [...prev, image]; // Добавляем
       }
-
-      setFavorites(updatedFavorites);
-      await AsyncStorage.setItem(FAVORITES_KEY, JSON.stringify(updatedFavorites));
-    } catch (error) {
-      console.error('[Context] Помилка збереження:', error);
-    }
+    });
   };
 
   const isFavorite = (id: number) => {
@@ -66,4 +62,13 @@ export const FavoritesProvider = ({ children }: { children: ReactNode }) => {
       {children}
     </FavoritesContext.Provider>
   );
+};
+
+// Хук для использования контекста избранного
+export const useFavorites = () => {
+  const context = useContext(FavoritesContext);
+  if (!context) {
+    throw new Error('useFavorites повинен використовуватися всередині FavoritesProvider');
+  }
+  return context;
 };

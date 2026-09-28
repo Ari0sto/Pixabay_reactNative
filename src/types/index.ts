@@ -16,18 +16,16 @@ export interface PixabayResponse {
   hits: PixabayImage[];
 }
 
-// Типы для нижнего меню
+// Типы для нижнего меню (Вкладки)
 export type BottomTabParamList = {
   Gallery: undefined;
+  Search: undefined;
   Favorites: undefined;
+  Profile: undefined;
 };
 
-// export type RootStackParamList = {
-//   Gallery: undefined;
-//   ImageDetails: { image: PixabayImage };
-// };
-
+// Типы для главного стека (Вкладки + Поверхностные экраны)
 export type RootStackParamList = {
-  MainTabs: undefined; // Здесь живут вкладки
-  ImageDetails: { image: PixabayImage };
+  MainTabs: undefined; // Загружает нижнее меню
+  ImageDetails: { image: PixabayImage }; // Открывается поверх вкладок
 };
