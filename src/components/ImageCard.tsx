@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { TouchableOpacity, Image, StyleSheet, Dimensions, View, Text } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Импорт иконок
+import { Ionicons } from '@expo/vector-icons';
 import { PixabayImage } from '../types';
+import { useFavorites } from '../context/FavoritesContext';
 
 interface ImageCardProps {
   image: PixabayImage;
@@ -13,12 +14,10 @@ const numColumns = 2;
 const cardWidth = (screenWidth - 30) / numColumns; 
 
 export default function ImageCard({ image, onPress }: ImageCardProps) {
-  // Локальный стейт для кнопки лайка (позже AsyncStorage)
-  const [isFavorite, setIsFavorite] = useState(false);
-
-  const handleFavoritePress = () => {
-    setIsFavorite(!isFavorite);
-  };
+  const { isFavorite, toggleFavorite } = useFavorites();
+  
+  // Проверка, есть ли эта картинка в избранном
+  const favorite = isFavorite(image.id);
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(image)} activeOpacity={0.8}>
@@ -28,16 +27,16 @@ export default function ImageCard({ image, onPress }: ImageCardProps) {
         resizeMode="cover" 
       />
       
-      {/* Кнопка "В избранное" в правом верхнем углу */}
-      <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
+      {/* Кнопка "В избранное" теперь вызывает функцию из Context */}
+      <TouchableOpacity style={styles.favoriteButton} onPress={() => toggleFavorite(image)}>
         <Ionicons 
-          name={isFavorite ? "heart" : "heart-outline"} 
+          name={favorite ? "heart" : "heart-outline"} 
           size={24} 
-          color={isFavorite ? "#e0245e" : "#fff"} 
+          color={favorite ? "#e0245e" : "#fff"} 
         />
       </TouchableOpacity>
 
-      {/* Оверлей со статистикой внизу */}
+      {/* Оверлей со статистикой */}
       <View style={styles.statsOverlay}>
         <View style={styles.statItem}>
           <Ionicons name="eye" size={14} color="#fff" />
@@ -88,7 +87,7 @@ const styles = StyleSheet.create({
   statItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4, // Расстояние между иконкой и текстом
+    gap: 4, 
   },
   statsText: {
     color: '#fff',
