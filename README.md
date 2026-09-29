@@ -143,13 +143,13 @@ https://pixabay.com/api/docs/
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/pixabay-gallery.git
+git clone https://github.com/Ari0sto/Pixabay_reactNative
 ```
 
 Navigate to the project directory:
 
 ```bash
-cd pixabay-gallery
+cd PixabayGallery
 ```
 
 Install the project dependencies:
